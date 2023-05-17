@@ -14,6 +14,7 @@ import { HeartOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.css';
+import { useBasketContext } from '../../../context/BasketContext';
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -26,6 +27,7 @@ const Item = styled(Paper)(({ theme }) => ({
 const BasicGrid = () => {
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [basket, setBasket ] = useBasketContext([]);
 
   useEffect(() => {
     getAllEmployees().then(data => {
@@ -37,9 +39,20 @@ const BasicGrid = () => {
     setSearchQuery(e.target.value);
   };
 
-  const handleLike = () => {
-    Swal.fire('Liked!', 'You liked the employee.', 'success');
-  };
+  
+  const handleLike = (product) => {
+    if (basket.some(item => item.id === product.id)) {
+      Swal.fire('Employee already in favorites!', '', 'info');
+    } else {
+      setBasket(prevBasket => {
+        const updatedBasket = [...prevBasket, product];
+        localStorage.setItem("basket", JSON.stringify(updatedBasket));
+        return updatedBasket;
+      });
+      Swal.fire('Liked!', 'You liked the employee.', 'success');
+    }
+  };  
+  
 
 
   const filteredProducts = products.filter(product => {
@@ -83,8 +96,11 @@ const BasicGrid = () => {
                   </Typography>
                   <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <Button
-                      icon={<HeartOutlined />}
-                      style={{ backgroundColor: 'orange' }} onClick={handleLike}
+                      icon={<HeartOutlined />}  key={product.id}
+                      style={{
+                        backgroundColor: basket.some(item => item.id === product.id) ? 'red' : 'orange'
+                      }} 
+                      onClick={() => handleLike(product)}
                     />
                   </div>
                 </CardContent>
